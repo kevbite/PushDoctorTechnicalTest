@@ -1,9 +1,11 @@
 using System;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using PDR.PatientBooking.Data;
 using PDR.PatientBooking.Data.Models;
@@ -41,19 +43,29 @@ namespace PDR.PatientBookingApi.FunctionalTests.Bookings
             return entity.Entity;
         }
 
-        public async Task<(HttpStatusCode statusCode, string body)> CreateBooking(Patient patient, Doctor doctor)
+        public async Task<(HttpStatusCode statusCode, string body)> CreateBooking(Patient patient, Doctor doctor, DateTime startTime, DateTime endTime)
         {
             using var client = _webApplicationFactory.CreateClient();
             var json = $@"{{
   ""id"": ""{Guid.NewGuid()}"",
-  ""startTime"": ""{DateTime.UtcNow:O}"",
-  ""endTime"": ""{DateTime.UtcNow:O}"",
+  ""startTime"": ""{startTime:O}"",
+  ""endTime"": ""{endTime:O}"",
   ""patientId"": {patient.Id},
   ""doctorId"": {doctor.Id}
 }}";
             using var responseMessage = await client.PostAsync("api/booking", new StringContent(json, Encoding.UTF8, "application/json"));
 
             return (responseMessage.StatusCode, await responseMessage.Content.ReadAsStringAsync());
+        }
+
+        public async Task<Order> GetOrder(Patient patient, Doctor doctor)
+        {
+            using var scope = _webApplicationFactory.Services.CreateScope();
+            await using var context = scope.ServiceProvider.GetRequiredService<PatientBookingContext>();
+
+            return await context.Order.FirstOrDefaultAsync(
+                x => x.PatientId == patient.Id
+                     && x.DoctorId == doctor.Id);
         }
     }
 }
