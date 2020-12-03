@@ -16,6 +16,11 @@ namespace PDR.PatientBookingApi.FunctionalTests.Bookings
             _harness = new PatientBookingHarness();
         }
 
+        [TearDown]
+        public void TearDown()
+        {
+            _harness.Dispose();
+        }
         [Test]
         public async Task ShouldReturn200OkResponseCode()
         {
