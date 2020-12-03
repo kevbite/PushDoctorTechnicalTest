@@ -12,5 +12,13 @@ namespace PDR.PatientBooking.Data.Models
         public virtual long DoctorId { get; set; }
         public virtual Patient Patient { get; set; }
         public virtual Doctor Doctor { get; set; }
+
+        public OrderStatus Status { get; set; } = OrderStatus.Active;
+    }
+
+    public enum OrderStatus
+    {
+        Active = 1,
+        Cancelled = 2,
     }
 }

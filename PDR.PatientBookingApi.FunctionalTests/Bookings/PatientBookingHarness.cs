@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Newtonsoft.Json.Linq;
 using PDR.PatientBooking.Data;
 using PDR.PatientBooking.Data.Models;
 
@@ -43,11 +44,11 @@ namespace PDR.PatientBookingApi.FunctionalTests.Bookings
             return entity.Entity;
         }
 
-        public async Task<(HttpStatusCode statusCode, string body)> CreateBooking(Patient patient, Doctor doctor,
+        public async Task<(HttpStatusCode statusCode, Guid bookingId)> CreateBooking(Patient patient, Doctor doctor,
             DateTime startTime, DateTime endTime)
         {
             using var client = _factory.CreateClient();
-            var json = $@"{{
+            var jsonRequest = $@"{{
   ""id"": ""{Guid.NewGuid()}"",
   ""startTime"": ""{startTime:O}"",
   ""endTime"": ""{endTime:O}"",
@@ -55,9 +56,11 @@ namespace PDR.PatientBookingApi.FunctionalTests.Bookings
   ""doctorId"": {doctor.Id}
 }}";
             using var responseMessage = await client.PostAsync("api/booking",
-                new StringContent(json, Encoding.UTF8, "application/json"));
+                new StringContent(jsonRequest, Encoding.UTF8, "application/json"));
 
-            return (responseMessage.StatusCode, await responseMessage.Content.ReadAsStringAsync());
+            var jsonBody = await responseMessage.Content.ReadAsStringAsync();
+            
+            return (responseMessage.StatusCode, Guid.Parse(JToken.Parse(jsonBody).Value<string>("id")));
         }
 
         public async Task<Order> GetOrder(Patient patient, Doctor doctor)
@@ -69,10 +72,28 @@ namespace PDR.PatientBookingApi.FunctionalTests.Bookings
                 x => x.PatientId == patient.Id
                      && x.DoctorId == doctor.Id);
         }
+        
+        public async Task<Order> GetOrder(Guid bookingId)
+        {
+            using var scope = _factory.Services.CreateScope();
+            await using var context = scope.ServiceProvider.GetRequiredService<PatientBookingContext>();
+
+            return await context.Order.FirstOrDefaultAsync(x => x.Id == bookingId);
+        }
 
         public void Dispose()
         {
             _factory.Dispose();
+        }
+
+        public async Task<HttpStatusCode> CancelBooking(Guid bookingId)
+        {
+            using var client = _factory.CreateClient();
+    
+            using var responseMessage = await client.PutAsync($"api/booking/{bookingId}/status",
+                new StringContent(@"""Cancelled""", Encoding.UTF8, "application/json"));
+            
+            return responseMessage.StatusCode;
         }
     }
 }

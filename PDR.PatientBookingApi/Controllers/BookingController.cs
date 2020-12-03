@@ -49,11 +49,11 @@ namespace PDR.PatientBookingApi.Controllers
             }
         }
 
-        [HttpPost()]
+        [HttpPost]
         public async Task<IActionResult> AddBooking(NewBooking newBooking)
         {
             var doctor = await _context.Doctor.FirstOrDefaultAsync(x => x.Id == newBooking.DoctorId);
-            
+
             if (!doctor.IsAvailable(newBooking.StartTime, newBooking.EndTime))
             {
                 return ValidationProblem(new ValidationProblemDetails
@@ -76,6 +76,16 @@ namespace PDR.PatientBookingApi.Controllers
             };
 
             await _context.Order.AddAsync(myBooking);
+            await _context.SaveChangesAsync();
+
+            return Ok(new {myBooking.Id});
+        }
+
+        [HttpPut("{bookingId}/status")]
+        public async Task<IActionResult> ChangeStatus([FromRoute] Guid bookingId, [FromBody]OrderStatus status)
+        {
+            var order = await _context.Order.SingleOrDefaultAsync(x => x.Id == bookingId);
+            order.Status = status;
             await _context.SaveChangesAsync();
 
             return Ok();
