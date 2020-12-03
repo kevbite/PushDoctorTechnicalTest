@@ -59,7 +59,7 @@ namespace PDR.PatientBookingApi.FunctionalTests.Bookings
                 new StringContent(jsonRequest, Encoding.UTF8, "application/json"));
 
             var jsonBody = await responseMessage.Content.ReadAsStringAsync();
-            
+
             return (responseMessage.StatusCode, Guid.Parse(JToken.Parse(jsonBody).Value<string>("id")));
         }
 
@@ -72,7 +72,7 @@ namespace PDR.PatientBookingApi.FunctionalTests.Bookings
                 x => x.PatientId == patient.Id
                      && x.DoctorId == doctor.Id);
         }
-        
+
         public async Task<Order> GetOrder(Guid bookingId)
         {
             using var scope = _factory.Services.CreateScope();
@@ -89,11 +89,21 @@ namespace PDR.PatientBookingApi.FunctionalTests.Bookings
         public async Task<HttpStatusCode> CancelBooking(Guid bookingId)
         {
             using var client = _factory.CreateClient();
-    
+
             using var responseMessage = await client.PutAsync($"api/booking/{bookingId}/status",
                 new StringContent(@"""Cancelled""", Encoding.UTF8, "application/json"));
-            
+
             return responseMessage.StatusCode;
+        }
+
+        public async Task<(HttpStatusCode statusCode, JToken body)> GetNextAppointments(int patientId)
+        {
+            using var client = _factory.CreateClient();
+
+            using var responseMessage = await client.GetAsync($"api/booking/patient/{patientId}/next");
+
+            var json = await responseMessage.Content.ReadAsStringAsync();
+            return (responseMessage.StatusCode, JToken.Parse(json));
         }
     }
 }
