@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace PDR.PatientBooking.Data.Models
 {
@@ -13,5 +15,11 @@ namespace PDR.PatientBooking.Data.Models
         public string Email { get; set; }
         public virtual ICollection<Order> Orders { get; set; }
         public DateTime Created { get; set; }
+
+        public bool IsAvailable(DateTime startTime, DateTime endTime)
+        {
+            return Orders.Any(x => x.StartTime >= startTime && x.StartTime <= endTime
+                                   || x.EndTime >= startTime && x.EndTime <= endTime);
+        }
     }
 }

@@ -51,9 +51,9 @@ namespace PDR.PatientBookingApi.Controllers
         [HttpPost()]
         public IActionResult AddBooking(NewBooking newBooking)
         {
-            if (_context.Order.Any(x => x.Doctor.Id == newBooking.DoctorId
-                                        && (x.StartTime >= newBooking.StartTime && x.StartTime <= newBooking.EndTime
-                                            || x.EndTime >= newBooking.StartTime && x.EndTime <= newBooking.EndTime)))
+            var doctor = _context.Doctor.FirstOrDefault(x => x.Id == newBooking.DoctorId);
+            
+            if (doctor.IsAvailable(newBooking.StartTime, newBooking.EndTime))
             {
                 return ValidationProblem(new ValidationProblemDetails
                 {
@@ -70,7 +70,7 @@ namespace PDR.PatientBookingApi.Controllers
                 PatientId = newBooking.PatientId,
                 DoctorId = newBooking.DoctorId,
                 Patient = patient,
-                Doctor = _context.Doctor.FirstOrDefault(x => x.Id == newBooking.DoctorId),
+                Doctor = doctor,
                 SurgeryType = (int) patient.Clinic.SurgeryType
             };
 
