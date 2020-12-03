@@ -7,13 +7,37 @@ using Microsoft.EntityFrameworkCore.Internal;
 
 namespace PDR.PatientBooking.Service.DoctorServices.Validation
 {
+    public class EmailValidator
+    {
+        public bool ValidEmailAddress(string email, ref PdrValidationResult result)
+        {
+            var errors = new List<string>();
+
+            var emailUsernameDomainSplit = email.Split("@");
+
+            if (emailUsernameDomainSplit.Length != 2 || emailUsernameDomainSplit.Any(x => x.Length == 0))
+            {
+                errors.Add("Email must be a valid email address");
+            }
+            
+            if (errors.Any())
+            {
+                result.Errors.AddRange(errors);
+                return true;
+            }
+
+            return false;
+        }
+    }
     public class AddDoctorRequestValidator : IAddDoctorRequestValidator
     {
         private readonly PatientBookingContext _context;
+        private readonly EmailValidator _emailValidator;
 
-        public AddDoctorRequestValidator(PatientBookingContext context)
+        public AddDoctorRequestValidator(PatientBookingContext context, EmailValidator emailValidator)
         {
             _context = context;
+            _emailValidator = emailValidator;
         }
 
         public PdrValidationResult ValidateRequest(AddDoctorRequest request)
@@ -26,7 +50,7 @@ namespace PDR.PatientBooking.Service.DoctorServices.Validation
             if (DoctorAlreadyInDb(request, ref result))
                 return result;
             
-            if (ValidEmailAddress(request, ref result))
+            if (_emailValidator.ValidEmailAddress(request.Email, ref result))
                 return result;
             
             return result;
@@ -54,25 +78,7 @@ namespace PDR.PatientBooking.Service.DoctorServices.Validation
             return false;
         }
 
-        public bool ValidEmailAddress(AddDoctorRequest request, ref PdrValidationResult result)
-        {
-            var errors = new List<string>();
-
-            var emailUsernameDomainSplit = request.Email.Split("@");
-
-            if (emailUsernameDomainSplit.Length != 2 || emailUsernameDomainSplit.Any(x => x.Length == 0))
-            {
-                errors.Add("Email must be a valid email address");
-            }
-            
-            if (errors.Any())
-            {
-                result.Errors.AddRange(errors);
-                return true;
-            }
-
-            return false;
-        }
+  
         private bool DoctorAlreadyInDb(AddDoctorRequest request, ref PdrValidationResult result)
         {
             if (_context.Doctor.Any(x => x.Email == request.Email))

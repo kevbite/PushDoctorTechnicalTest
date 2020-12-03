@@ -7,6 +7,8 @@ using PDR.PatientBooking.Data.Models;
 using PDR.PatientBooking.Service.PatientServices.Requests;
 using PDR.PatientBooking.Service.PatientServices.Validation;
 using System;
+using FluentAssertions.Execution;
+using PDR.PatientBooking.Service.DoctorServices.Validation;
 
 namespace PDR.PatientBooking.Service.Tests.PatientServices.Validation
 {
@@ -36,7 +38,8 @@ namespace PDR.PatientBooking.Service.Tests.PatientServices.Validation
 
             // Sut instantiation
             _addPatientRequestValidator = new AddPatientRequestValidator(
-                _context
+                _context,
+                new EmailValidator()
             );
         }
 
@@ -109,6 +112,7 @@ namespace PDR.PatientBooking.Service.Tests.PatientServices.Validation
         [TestCase("user@")]
         [TestCase("@")]
         [TestCase("user")]
+        [TestCase("user@user@user")]
         public void ValidateRequest_InvalidEmail_ReturnsFailedValidationResult(string email)
         {
             //arrange
@@ -119,6 +123,7 @@ namespace PDR.PatientBooking.Service.Tests.PatientServices.Validation
             var res = _addPatientRequestValidator.ValidateRequest(request);
 
             //assert
+            using var _ = new AssertionScope();
             res.PassedValidation.Should().BeFalse();
             res.Errors.Should().Contain("Email must be a valid email address");
         }

@@ -37,7 +37,8 @@ namespace PDR.PatientBooking.Service.Tests.DoctorServices.Validation
 
             // Sut instantiation
             _addDoctorRequestValidator = new AddDoctorRequestValidator(
-                _context
+                _context,
+                new EmailValidator()
             );
         }
 
