@@ -110,6 +110,7 @@ namespace PDR.PatientBooking.Service.Tests.DoctorServices.Validation
         [TestCase("user@")]
         [TestCase("@")]
         [TestCase("user")]
+        [TestCase("user@user@domain")]
         public void ValidateRequest_InvalidEmail_ReturnsFailedValidationResult(string email)
         {
             //arrange

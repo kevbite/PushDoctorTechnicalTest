@@ -60,7 +60,7 @@ namespace PDR.PatientBooking.Service.DoctorServices.Validation
 
             var emailUsernameDomainSplit = request.Email.Split("@");
 
-            if (emailUsernameDomainSplit.Length == 1 || emailUsernameDomainSplit.Any(x => x.Length == 0))
+            if (emailUsernameDomainSplit.Length != 2 || emailUsernameDomainSplit.Any(x => x.Length == 0))
             {
                 errors.Add("Email must be a valid email address");
             }
