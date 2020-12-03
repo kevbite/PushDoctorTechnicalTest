@@ -12,6 +12,7 @@ namespace PDR.PatientBooking.Service.IoC
     {
         public static void RegisterPatientBookingServices(this IServiceCollection collection)
         {
+            collection.AddTransient<EmailValidator>();
             collection.AddScoped<IPatientService, PatientService>();
             collection.AddScoped<IAddPatientRequestValidator, AddPatientRequestValidator>();
 

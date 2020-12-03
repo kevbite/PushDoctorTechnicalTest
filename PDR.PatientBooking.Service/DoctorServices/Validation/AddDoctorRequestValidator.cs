@@ -7,28 +7,6 @@ using Microsoft.EntityFrameworkCore.Internal;
 
 namespace PDR.PatientBooking.Service.DoctorServices.Validation
 {
-    public class EmailValidator
-    {
-        public bool ValidEmailAddress(string email, ref PdrValidationResult result)
-        {
-            var errors = new List<string>();
-
-            var emailUsernameDomainSplit = email.Split("@");
-
-            if (emailUsernameDomainSplit.Length != 2 || emailUsernameDomainSplit.Any(x => x.Length == 0))
-            {
-                errors.Add("Email must be a valid email address");
-            }
-            
-            if (errors.Any())
-            {
-                result.Errors.AddRange(errors);
-                return true;
-            }
-
-            return false;
-        }
-    }
     public class AddDoctorRequestValidator : IAddDoctorRequestValidator
     {
         private readonly PatientBookingContext _context;
