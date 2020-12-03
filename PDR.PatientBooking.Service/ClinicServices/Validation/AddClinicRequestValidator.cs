@@ -37,7 +37,6 @@ namespace PDR.PatientBooking.Service.ClinicServices.Validation
 
             if (errors.Any())
             {
-                result.PassedValidation = false;
                 result.Errors.AddRange(errors);
                 return true;
             }
@@ -49,7 +48,6 @@ namespace PDR.PatientBooking.Service.ClinicServices.Validation
         {
             if (_context.Clinic.Any(x => x.Name == request.Name))
             {
-                result.PassedValidation = false;
                 result.Errors.Add("A clinic with that name already exists");
                 return true;
             }

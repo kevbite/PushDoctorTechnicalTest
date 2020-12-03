@@ -122,7 +122,7 @@ namespace PDR.PatientBooking.Service.Tests.DoctorServices.Validation
             //assert
             using var _ = new AssertionScope();
             res.PassedValidation.Should().BeFalse();
-            res.Errors.Should().Contain("Email must be a valid email address");
+                res.Errors.Should().Contain("Email must be a valid email address");
         }
 
         [TestCase("user@domain.com")]

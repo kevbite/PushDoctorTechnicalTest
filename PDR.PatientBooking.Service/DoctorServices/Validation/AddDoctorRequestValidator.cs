@@ -3,6 +3,7 @@ using PDR.PatientBooking.Service.DoctorServices.Requests;
 using PDR.PatientBooking.Service.Validation;
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.EntityFrameworkCore.Internal;
 
 namespace PDR.PatientBooking.Service.DoctorServices.Validation
 {
@@ -24,7 +25,10 @@ namespace PDR.PatientBooking.Service.DoctorServices.Validation
 
             if (DoctorAlreadyInDb(request, ref result))
                 return result;
-
+            
+            if (ValidEmailAddress(request, ref result))
+                return result;
+            
             return result;
         }
 
@@ -43,7 +47,6 @@ namespace PDR.PatientBooking.Service.DoctorServices.Validation
 
             if (errors.Any())
             {
-                result.PassedValidation = false;
                 result.Errors.AddRange(errors);
                 return true;
             }
@@ -51,12 +54,30 @@ namespace PDR.PatientBooking.Service.DoctorServices.Validation
             return false;
         }
 
+        public bool ValidEmailAddress(AddDoctorRequest request, ref PdrValidationResult result)
+        {
+            var errors = new List<string>();
+
+            var emailUsernameDomainSplit = request.Email.Split("@");
+
+            if (emailUsernameDomainSplit.Length == 1 || emailUsernameDomainSplit.Any(x => x.Length == 0))
+            {
+                errors.Add("Email must be a valid email address");
+            }
+            
+            if (errors.Any())
+            {
+                result.Errors.AddRange(errors);
+                return true;
+            }
+
+            return false;
+        }
         private bool DoctorAlreadyInDb(AddDoctorRequest request, ref PdrValidationResult result)
         {
             if (_context.Doctor.Any(x => x.Email == request.Email))
             {
-                result.PassedValidation = false;
-                result.Errors.Add("A doctor with that email address already exists");
+                    result.Errors.Add("A doctor with that email address already exists");
                 return true;
             }
 

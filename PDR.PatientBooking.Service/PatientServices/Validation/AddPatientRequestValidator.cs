@@ -46,7 +46,6 @@ namespace PDR.PatientBooking.Service.PatientServices.Validation
 
             if (errors.Any())
             {
-                result.PassedValidation = false;
                 result.Errors.AddRange(errors);
                 return true;
             }
@@ -58,7 +57,6 @@ namespace PDR.PatientBooking.Service.PatientServices.Validation
         {
             if (_context.Patient.Any(x => x.Email == request.Email))
             {
-                result.PassedValidation = false;
                 result.Errors.Add("A patient with that email address already exists");
                 return true;
             }
@@ -70,7 +68,6 @@ namespace PDR.PatientBooking.Service.PatientServices.Validation
         {
             if (!_context.Clinic.Any(x => x.Id == request.ClinicId))
             {
-                result.PassedValidation = false;
                 result.Errors.Add("A clinic with that ID could not be found");
                 return true;
             }
