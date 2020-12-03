@@ -53,7 +53,7 @@ namespace PDR.PatientBookingApi.Controllers
         {
             var doctor = _context.Doctor.FirstOrDefault(x => x.Id == newBooking.DoctorId);
             
-            if (doctor.IsAvailable(newBooking.StartTime, newBooking.EndTime))
+            if (!doctor.IsAvailable(newBooking.StartTime, newBooking.EndTime))
             {
                 return ValidationProblem(new ValidationProblemDetails
                 {

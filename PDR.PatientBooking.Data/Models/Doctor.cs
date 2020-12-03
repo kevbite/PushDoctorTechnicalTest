@@ -18,7 +18,10 @@ namespace PDR.PatientBooking.Data.Models
 
         public bool IsAvailable(DateTime startTime, DateTime endTime)
         {
-            return Orders.Any(x => x.StartTime >= startTime && x.StartTime <= endTime
+            if (startTime <= DateTime.UtcNow)
+                return false;
+            
+            return !Orders.Any(x => x.StartTime >= startTime && x.StartTime <= endTime
                                    || x.EndTime >= startTime && x.EndTime <= endTime);
         }
     }

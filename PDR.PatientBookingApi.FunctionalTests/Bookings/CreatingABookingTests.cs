@@ -29,7 +29,9 @@ namespace PDR.PatientBookingApi.FunctionalTests.Bookings
         {
             var patient = await _harness.CreatePatient();
             var doctor = await _harness.CreateDoctor();
-            var booking = await _harness.CreateBooking(patient, doctor, DateTime.UtcNow, DateTime.UtcNow);
+            var startTime = DateTime.UtcNow.AddHours(1);
+            var endTime = startTime.AddHours(1);
+            var booking = await _harness.CreateBooking(patient, doctor, startTime, endTime);
             
             booking.statusCode
                 .Should().Be(StatusCodes.Status200OK);
@@ -41,8 +43,8 @@ namespace PDR.PatientBookingApi.FunctionalTests.Bookings
         {
             var patient = await _harness.CreatePatient();
             var doctor = await _harness.CreateDoctor();
-            var startTime = DateTime.UtcNow;
-            var endTime = DateTime.UtcNow;
+            var startTime = DateTime.UtcNow.AddHours(1);
+            var endTime = startTime.AddHours(1);
             await _harness.CreateBooking(patient, doctor, startTime, endTime);
 
             var order = await _harness.GetOrder(patient, doctor);
@@ -61,7 +63,7 @@ namespace PDR.PatientBookingApi.FunctionalTests.Bookings
         public async Task ShouldAcceptMultipleBookingsForSameDoctorThatDoNotCrossOver()
         {
             var doctor = await _harness.CreateDoctor();
-            var startTime = DateTime.UtcNow;
+            var startTime = DateTime.UtcNow.AddHours(1);
             var endTime = startTime.AddHours(1);
 
             var (statusCode1, _) = await _harness.CreateBooking(await _harness.CreatePatient(), doctor, startTime, endTime);
@@ -81,7 +83,7 @@ namespace PDR.PatientBookingApi.FunctionalTests.Bookings
         public async Task ShouldReturn400BadRequestResponseCodeForSameDoctorAtSameTime()
         {
             var doctor = await _harness.CreateDoctor();
-            var startTime = DateTime.UtcNow;
+            var startTime = DateTime.UtcNow.AddHours(1);
             var endTime = startTime.AddHours(1);
             await _harness.CreateBooking(await _harness.CreatePatient(), doctor, startTime, endTime);
             
@@ -96,7 +98,7 @@ namespace PDR.PatientBookingApi.FunctionalTests.Bookings
         public async Task ShouldReturn400BadRequestResponseCodeForSameDoctorWhereStartTimeOverlaps()
         {
             var doctor = await _harness.CreateDoctor();
-            var startTime = DateTime.UtcNow;
+            var startTime = DateTime.UtcNow.AddHours(1);
             var endTime = startTime.AddHours(1);
             await _harness.CreateBooking(await _harness.CreatePatient(), doctor, startTime, endTime);
 
@@ -112,7 +114,7 @@ namespace PDR.PatientBookingApi.FunctionalTests.Bookings
         public async Task ShouldReturn400BadRequestResponseCodeForSameDoctorWhereEndTimeOverlaps()
         {
             var doctor = await _harness.CreateDoctor();
-            var startTime = DateTime.UtcNow;
+            var startTime = DateTime.UtcNow.AddHours(1);
             var endTime = startTime.AddHours(1);
             await _harness.CreateBooking(await _harness.CreatePatient(), doctor, startTime, endTime);
 
@@ -121,6 +123,18 @@ namespace PDR.PatientBookingApi.FunctionalTests.Bookings
             var booking = await _harness.CreateBooking(await _harness.CreatePatient(), doctor, startTime2, endTime2);
 
             booking.statusCode
+                .Should().Be(StatusCodes.Status400BadRequest);
+        }
+        
+        [Test]
+        public async Task ShouldReturn400BadRequestResponseCodeForBookingDoctorInThePast()
+        {
+            var doctor = await _harness.CreateDoctor();
+            var startTime = DateTime.UtcNow.AddSeconds(-2);
+            var endTime = startTime.AddSeconds(1);
+            var (statusCode, _) = await _harness.CreateBooking(await _harness.CreatePatient(), doctor, startTime, endTime);
+
+            statusCode
                 .Should().Be(StatusCodes.Status400BadRequest);
         }
     }
