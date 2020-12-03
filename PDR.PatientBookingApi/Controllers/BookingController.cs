@@ -4,6 +4,8 @@ using PDR.PatientBooking.Data.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 
 namespace PDR.PatientBookingApi.Controllers
 {
@@ -49,9 +51,9 @@ namespace PDR.PatientBookingApi.Controllers
         }
 
         [HttpPost()]
-        public IActionResult AddBooking(NewBooking newBooking)
+        public async Task<IActionResult> AddBooking(NewBooking newBooking)
         {
-            var doctor = _context.Doctor.FirstOrDefault(x => x.Id == newBooking.DoctorId);
+            var doctor = await _context.Doctor.FirstOrDefaultAsync(x => x.Id == newBooking.DoctorId);
             
             if (!doctor.IsAvailable(newBooking.StartTime, newBooking.EndTime))
             {
@@ -61,7 +63,7 @@ namespace PDR.PatientBookingApi.Controllers
                 });
             }
 
-            var patient = _context.Patient.FirstOrDefault(x => x.Id == newBooking.PatientId);
+            var patient = await _context.Patient.FirstOrDefaultAsync(x => x.Id == newBooking.PatientId);
             var myBooking = new Order
             {
                 Id = new Guid(),
@@ -74,8 +76,8 @@ namespace PDR.PatientBookingApi.Controllers
                 SurgeryType = (int) patient.Clinic.SurgeryType
             };
 
-            _context.Order.AddRange(new List<Order> {myBooking});
-            _context.SaveChanges();
+            await _context.Order.AddAsync(myBooking);
+            await _context.SaveChangesAsync();
 
             return Ok();
         }
