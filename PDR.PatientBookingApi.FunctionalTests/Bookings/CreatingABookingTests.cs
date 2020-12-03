@@ -1,8 +1,10 @@
 using System;
 using System.Threading.Tasks;
 using FluentAssertions;
+using FluentAssertions.Execution;
 using Microsoft.AspNetCore.Http;
 using NUnit.Framework;
+using PDR.PatientBooking.Data.Models;
 
 namespace PDR.PatientBookingApi.FunctionalTests.Bookings
 {
@@ -21,6 +23,7 @@ namespace PDR.PatientBookingApi.FunctionalTests.Bookings
         {
             _harness.Dispose();
         }
+        
         [Test]
         public async Task ShouldReturn200OkResponseCode()
         {
@@ -52,6 +55,73 @@ namespace PDR.PatientBookingApi.FunctionalTests.Bookings
                 DoctorId = doctor.Id,
                 SurgeryType = (int)patient.Clinic.SurgeryType
             });
+        }
+        
+        [Test]
+        public async Task ShouldAcceptMultipleBookingsForSameDoctorThatDoNotCrossOver()
+        {
+            var doctor = await _harness.CreateDoctor();
+            var startTime = DateTime.UtcNow;
+            var endTime = startTime.AddHours(1);
+
+            var (statusCode1, _) = await _harness.CreateBooking(await _harness.CreatePatient(), doctor, startTime, endTime);
+
+            var startTime2 = endTime.AddHours(1);
+            var endTime2 = startTime2.AddHours(1);
+            var (statusCode2, _) = await _harness.CreateBooking(await _harness.CreatePatient(), doctor, startTime2, endTime2);
+
+            using var _ = new AssertionScope();
+            statusCode1
+                .Should().Be(StatusCodes.Status200OK);
+            statusCode2
+                .Should().Be(StatusCodes.Status200OK);
+        }
+                
+        [Test]
+        public async Task ShouldReturn400BadRequestResponseCodeForSameDoctorAtSameTime()
+        {
+            var doctor = await _harness.CreateDoctor();
+            var startTime = DateTime.UtcNow;
+            var endTime = startTime.AddHours(1);
+            await _harness.CreateBooking(await _harness.CreatePatient(), doctor, startTime, endTime);
+            
+            var booking = await _harness.CreateBooking(await _harness.CreatePatient(), doctor, startTime, endTime);
+
+            booking.statusCode
+                .Should().Be(StatusCodes.Status400BadRequest);
+        }
+        
+                        
+        [Test]
+        public async Task ShouldReturn400BadRequestResponseCodeForSameDoctorWhereStartTimeOverlaps()
+        {
+            var doctor = await _harness.CreateDoctor();
+            var startTime = DateTime.UtcNow;
+            var endTime = startTime.AddHours(1);
+            await _harness.CreateBooking(await _harness.CreatePatient(), doctor, startTime, endTime);
+
+            var startTime2 = startTime.AddHours(-0.5);
+            var endTime2 = startTime.AddHours(0.5);
+            var booking = await _harness.CreateBooking(await _harness.CreatePatient(), doctor, startTime2, endTime2);
+
+            booking.statusCode
+                .Should().Be(StatusCodes.Status400BadRequest);
+        }
+        
+        [Test]
+        public async Task ShouldReturn400BadRequestResponseCodeForSameDoctorWhereEndTimeOverlaps()
+        {
+            var doctor = await _harness.CreateDoctor();
+            var startTime = DateTime.UtcNow;
+            var endTime = startTime.AddHours(1);
+            await _harness.CreateBooking(await _harness.CreatePatient(), doctor, startTime, endTime);
+
+            var startTime2 = endTime.AddHours(-0.5);
+            var endTime2 = endTime.AddHours(0.5);
+            var booking = await _harness.CreateBooking(await _harness.CreatePatient(), doctor, startTime2, endTime2);
+
+            booking.statusCode
+                .Should().Be(StatusCodes.Status400BadRequest);
         }
     }
 }

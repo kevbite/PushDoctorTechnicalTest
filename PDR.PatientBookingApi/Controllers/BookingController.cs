@@ -51,31 +51,33 @@ namespace PDR.PatientBookingApi.Controllers
         [HttpPost()]
         public IActionResult AddBooking(NewBooking newBooking)
         {
-            var bookingId = new Guid();
-            var bookingStartTime = newBooking.StartTime;
-            var bookingEndTime = newBooking.EndTime;
-            var bookingPatientId = newBooking.PatientId;
-            var bookingPatient = _context.Patient.FirstOrDefault(x => x.Id == newBooking.PatientId);
-            var bookingDoctorId = newBooking.DoctorId;
-            var bookingDoctor = _context.Doctor.FirstOrDefault(x => x.Id == newBooking.DoctorId);
-            var bookingSurgeryType = _context.Patient.FirstOrDefault(x => x.Id == bookingPatientId).Clinic.SurgeryType;
+            if (_context.Order.Any(x => x.Doctor.Id == newBooking.DoctorId
+                                        && (x.StartTime >= newBooking.StartTime && x.StartTime <= newBooking.EndTime
+                                            || x.EndTime >= newBooking.StartTime && x.EndTime <= newBooking.EndTime)))
+            {
+                return ValidationProblem(new ValidationProblemDetails
+                {
+                    Detail = "Doctor is not available for booking"
+                });
+            }
 
+            var patient = _context.Patient.FirstOrDefault(x => x.Id == newBooking.PatientId);
             var myBooking = new Order
             {
-                Id = bookingId,
-                StartTime = bookingStartTime,
-                EndTime = bookingEndTime,
-                PatientId = bookingPatientId,
-                DoctorId = bookingDoctorId,
-                Patient = bookingPatient,
-                Doctor = bookingDoctor,
-                SurgeryType = (int)bookingSurgeryType
+                Id = new Guid(),
+                StartTime = newBooking.StartTime,
+                EndTime = newBooking.EndTime,
+                PatientId = newBooking.PatientId,
+                DoctorId = newBooking.DoctorId,
+                Patient = patient,
+                Doctor = _context.Doctor.FirstOrDefault(x => x.Id == newBooking.DoctorId),
+                SurgeryType = (int) patient.Clinic.SurgeryType
             };
 
-            _context.Order.AddRange(new List<Order> { myBooking });
+            _context.Order.AddRange(new List<Order> {myBooking});
             _context.SaveChanges();
 
-            return StatusCode(200);
+            return Ok();
         }
 
         public class NewBooking
@@ -96,7 +98,7 @@ namespace PDR.PatientBookingApi.Controllers
             latestBooking.StartTime = bookings2[i].StartTime;
             latestBooking.EndTime = bookings2[i].EndTime;
             latestBooking.PatientId = bookings2[i].PatientId;
-            latestBooking.SurgeryType = (int)bookings2[i].GetSurgeryType();
+            latestBooking.SurgeryType = (int) bookings2[i].GetSurgeryType();
 
             return latestBooking;
         }
