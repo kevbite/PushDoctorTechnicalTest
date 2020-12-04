@@ -20,12 +20,12 @@ namespace PDR.PatientBookingApi.Controllers
         }
 
         [HttpGet("patient/{identificationNumber}/next")]
-        public IActionResult GetPatientNextAppointment(long identificationNumber)
+        public async Task<IActionResult> GetPatientNextAppointment(long identificationNumber)
         {
-            var nextBooking = _context.Order
+            var nextBooking = await _context.Order
                 .Where(order => order.Status == OrderStatus.Active)
                 .OrderBy(x => x.StartTime)
-                .FirstOrDefault(x => x.PatientId == identificationNumber && x.StartTime > DateTime.Now);
+                .FirstOrDefaultAsync(x => x.PatientId == identificationNumber && x.StartTime > DateTime.Now);
 
             if (nextBooking is null)
             {
