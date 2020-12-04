@@ -77,6 +77,10 @@ namespace PDR.PatientBookingApi.Controllers
         public async Task<IActionResult> ChangeStatus([FromRoute] Guid bookingId, [FromBody] OrderStatus status)
         {
             var order = await _context.Order.SingleOrDefaultAsync(x => x.Id == bookingId);
+            if (order is null)
+            {
+                return NotFound();
+            }
             order.Status = status;
             await _context.SaveChangesAsync();
 

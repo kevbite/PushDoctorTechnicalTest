@@ -33,6 +33,13 @@ namespace PDR.PatientBookingApi.FunctionalTests.Bookings
             statusCode.Should().Be(StatusCodes.Status200OK);
         }
         
+        [Test]
+        public async Task ShouldReturn404NotFoundForBookingsThatDoNotExist()
+        {
+            var statusCode = await _harness.CancelBooking(Guid.NewGuid());
+            
+            statusCode.Should().Be(StatusCodes.Status404NotFound);
+        }
         
         [Test]
         public async Task ShouldCancelBooking()
