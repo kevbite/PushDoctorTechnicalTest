@@ -22,31 +22,23 @@ namespace PDR.PatientBookingApi.Controllers
         [HttpGet("patient/{identificationNumber}/next")]
         public IActionResult GetPatientNextAppointment(long identificationNumber)
         {
-            var bockings = _context.Order.OrderBy(x => x.StartTime).ToList();
+            var nextBooking = _context.Order
+                .Where(order => order.Status == OrderStatus.Active)
+                .OrderBy(x => x.StartTime)
+                .FirstOrDefault(x => x.PatientId == identificationNumber && x.StartTime > DateTime.Now);
 
-            if (bockings.Where(x => x.Patient.Id == identificationNumber).Count() == 0)
+            if (nextBooking is null)
             {
                 return StatusCode(502);
             }
-            else
+
+            return Ok(new
             {
-                var bookings2 = bockings.Where(x => x.PatientId == identificationNumber);
-                if (bookings2.Where(x => x.StartTime > DateTime.Now).Count() == 0)
-                {
-                    return StatusCode(502);
-                }
-                else
-                {
-                    var bookings3 = bookings2.Where(x => x.StartTime > DateTime.Now);
-                    return Ok(new
-                    {
-                        bookings3.First().Id,
-                        bookings3.First().DoctorId,
-                        bookings3.First().StartTime,
-                        bookings3.First().EndTime
-                    });
-                }
-            }
+                nextBooking.Id,
+                nextBooking.DoctorId,
+                nextBooking.StartTime,
+                nextBooking.EndTime
+            });
         }
 
         [HttpPost]
@@ -82,7 +74,7 @@ namespace PDR.PatientBookingApi.Controllers
         }
 
         [HttpPut("{bookingId}/status")]
-        public async Task<IActionResult> ChangeStatus([FromRoute] Guid bookingId, [FromBody]OrderStatus status)
+        public async Task<IActionResult> ChangeStatus([FromRoute] Guid bookingId, [FromBody] OrderStatus status)
         {
             var order = await _context.Order.SingleOrDefaultAsync(x => x.Id == bookingId);
             order.Status = status;

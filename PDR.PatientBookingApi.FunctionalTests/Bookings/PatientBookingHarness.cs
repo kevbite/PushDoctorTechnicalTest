@@ -24,6 +24,7 @@ namespace PDR.PatientBookingApi.FunctionalTests.Bookings
             await using var setupContext = scope.ServiceProvider.GetRequiredService<PatientBookingContext>();
             var entity = await setupContext.Patient.AddAsync(new Patient
             {
+                Id = UniqueSequence.Next(),
                 Clinic = new Clinic
                 {
                     SurgeryType = SurgeryType.SystemTwo
@@ -38,7 +39,10 @@ namespace PDR.PatientBookingApi.FunctionalTests.Bookings
         {
             using var scope = _factory.Services.CreateScope();
             await using var setupContext = scope.ServiceProvider.GetRequiredService<PatientBookingContext>();
-            var entity = await setupContext.Doctor.AddAsync(new Doctor());
+            var entity = await setupContext.Doctor.AddAsync(new Doctor
+            {
+                Id = UniqueSequence.Next()
+            });
             await setupContext.SaveChangesAsync();
 
             return entity.Entity;
@@ -78,7 +82,8 @@ namespace PDR.PatientBookingApi.FunctionalTests.Bookings
 
             var jsonBody = await responseMessage.Content.ReadAsStringAsync();
 
-            return (responseMessage.StatusCode, Guid.Parse(JToken.Parse(jsonBody).Value<string>("id")));
+            Guid.TryParse(JToken.Parse(jsonBody).Value<string>("id"), out var bookingId);
+            return (responseMessage.StatusCode, bookingId);
         }
 
         public async Task<Order> GetOrder(Patient patient, Doctor doctor)
