@@ -43,6 +43,24 @@ namespace PDR.PatientBookingApi.FunctionalTests.Bookings
 
             return entity.Entity;
         }
+        
+        public async Task<Order> CreateOrder(Patient patient,
+            DateTime startTime, DateTime endTime, Doctor doctor)
+        {
+            using var scope = _factory.Services.CreateScope();
+            await using var setupContext = scope.ServiceProvider.GetRequiredService<PatientBookingContext>();
+            var entity = await setupContext.Order.AddAsync(new Order
+            {
+                Id = Guid.NewGuid(),
+                StartTime = startTime,
+                EndTime = endTime,
+                PatientId = patient.Id,
+                DoctorId = doctor.Id
+            });
+            await setupContext.SaveChangesAsync();
+
+            return entity.Entity;
+        }
 
         public async Task<(HttpStatusCode statusCode, Guid bookingId)> CreateBooking(Patient patient, Doctor doctor,
             DateTime startTime, DateTime endTime)
@@ -96,7 +114,7 @@ namespace PDR.PatientBookingApi.FunctionalTests.Bookings
             return responseMessage.StatusCode;
         }
 
-        public async Task<(HttpStatusCode statusCode, JToken body)> GetNextAppointments(int patientId)
+        public async Task<(HttpStatusCode statusCode, JToken body)> GetNextAppointments(long patientId)
         {
             using var client = _factory.CreateClient();
 
